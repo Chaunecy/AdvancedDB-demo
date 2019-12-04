@@ -152,9 +152,10 @@ class ShowLaptops extends React.Component {
 class App extends React.Component {
     constructor(props) {
         super(props);
-        this.__props_link = "http://localhost:8000/users/props";
-        this.__laptops_link = "http://localhost:8000/users/laptops";
-        this.__recommendation = "http://localhost:8000/users/recommendation";
+        const ip_address = "http://10.222.158.183:8080/";
+        this.__props_link = `${ip_address}props`;
+        this.__laptops_link = `${ip_address}laptops`;
+        this.__recommendation = `${ip_address}recommendation`;
 
         this.state = {
             // received data
@@ -168,7 +169,7 @@ class App extends React.Component {
             video_memory_list: ["8G", "sharing"],
             screen_resolution_list: ["1080x760", "1920x1080"],
             screen_size_list: ["14.0", "15.6"],
-            sort_list: ["best"],
+            sort_list: ["best", "price", "sales"],
             reverse_list: [false, true],
             scenario_list: ["学生"],
             // sent data
@@ -362,7 +363,6 @@ class App extends React.Component {
     }
 
     handleQueryClick() {
-        console.log(this.state.activeIndex);
         if (this.state.activeIndex === 0) {
             this.fetch_laptops();
         } else if (this.state.activeIndex === 1) {
