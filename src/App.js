@@ -152,7 +152,7 @@ class ShowLaptops extends React.Component {
 class App extends React.Component {
     constructor(props) {
         super(props);
-        const ip_address = "http://10.222.158.183:8080/";
+        const ip_address = "http://10.222.167.43:8080/";
         this.__props_link = `${ip_address}props`;
         this.__laptops_link = `${ip_address}laptops`;
         this.__recommendation = `${ip_address}recommendation`;
@@ -338,7 +338,7 @@ class App extends React.Component {
     }
 
     fetch_props() {
-        const text = {};
+        const text = {"h": "w"};
         const send = JSON.stringify(text);
         fetch(this.__props_link, {
             method: "POST",
@@ -346,15 +346,15 @@ class App extends React.Component {
             body: send,
         }).then(res => res.json()).then(data => {
             this.setState({
-                cpu_list: data["cpu"],
+                cpu_list: data["cpus"],
                 memory_list: data["memory"],
                 ssd_list: data["ssd"],
                 hdd_list: data["hdd"],
-                price_interval_list: data["price_interval"],
+                price_interval_list: data["interval"],
                 brand_list: data["brand"],
                 video_card_list: data["video_card"],
                 video_memory_list: data["video_memory"],
-                screen_resolution_list: data["screen_resolution"],
+                screen_resolution_list: data["resolution"],
                 screen_size_list: data["screen_size"],
                 sort_list: data["sort"],
                 scenario_list: data["scenario"]
@@ -379,6 +379,14 @@ class App extends React.Component {
         )
     }
 
+    constraint(prop, universe) {
+        if (prop.length === 0) {
+            return universe;
+        } else {
+            return prop;
+        }
+    }
+
     fetch_laptops() {
         if (!this.check_precondition_of_fetch_laptops()) {
             window.alert("请至少选择一个属性");
@@ -386,29 +394,57 @@ class App extends React.Component {
         }
         const state = this.state;
         const text = {
-            brand: state.brand,
-            cpu: state.cpu,
-            memory: state.memory,
-            ssd: state.ssd,
-            hdd: state.hdd,
-            price_interval: state.price_interval,
-            video_card: state.video_card,
-            video_memory: state.video_memory,
-            screen_size: state.screen_size,
-            screen_resolution: state.screen_resolution,
+            brand: this.constraint(state.brand, state.brand_list),
+            cpu: this.constraint(state.cpu, state.cpu_list),
+            memory: this.constraint(state.memory, state.memory_list),
+            ssd: this.constraint(state.ssd, state.ssd_list),
+            hdd: this.constraint(state.hdd, state.hdd_list),
+            interval: this.constraint(state.price_interval, state.price_interval_list),
+            video_card: this.constraint(state.video_card, state.video_card_list),
+            video_memory: this.constraint(state.video_memory, state.video_memory_list),
+            screen_size: this.constraint(state.screen_size, state.screen_size_list),
+            resolution: this.constraint(state.screen_resolution, state.screen_resolution_list),
             sort_policy: state.sort_policy,
             reverse: state.reverse,
         };
         const send = JSON.stringify(text);
+        console.log(send);
         fetch(this.__laptops_link, {
             method: "POST",
             headers: {"Content-Type": "application/json; charset=utf-8"},
             body: send,
         }).then(res => res.json()).then(data => {
             this.setState({
-                laptop_list: data
+                laptop_list: this.parse_data_got(data)
             });
         });
+    }
+
+    /**
+     *
+     * @returns {[]} parsed data
+     * @param raw_data
+     */
+    parse_data_got(raw_data) {
+        const laptop_list = [];
+        for (const data of raw_data) {
+            laptop_list.push({
+                "product": data["product"],
+                "brand": data["brand"],
+                "cpu": data["cpu"],
+                "ssd": data["ssd"],
+                "video_card": data["video_card"],
+                "memory": data["memory"],
+                "video_memory": data["video_memory"],
+                "hdd": data["hdd"],
+                "screen_size": data["screen_size"],
+                "screen_resolution": data["resolution"],
+                "price": data["price"],
+                "sales": data["sales"]
+            });
+        }
+        console.log(laptop_list);
+        return laptop_list;
     }
 
     check_precondition_of_fetch_recommendation() {
@@ -427,14 +463,17 @@ class App extends React.Component {
             sort_policy: state.sort_policy,
             reverse: state.reverse,
         };
+
         const send = JSON.stringify(text);
         fetch(this.__recommendation, {
-            method: "POST",
+            method: "post",
+            mode: "cors",
             headers: {"Content-Type": "application/json; charset=utf-8"},
             body: send,
         }).then(res => res.json()).then(data => {
+            // console.log(data);
             this.setState({
-                laptop_list: data
+                laptop_list: this.parse_data_got(data)
             });
         });
     }
