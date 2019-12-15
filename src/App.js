@@ -11,6 +11,7 @@ import {
     TableCell, TableHeader, TableHeaderCell,
     TableRow, TabPane
 } from "semantic-ui-react";
+import {Axis, Chart, Geom, Legend, Tooltip} from "bizcharts";
 
 class MultiChoice extends React.Component {
     render() {
@@ -70,8 +71,8 @@ class SortConfigure extends React.Component {
                 <Grid columns={"equal"}>
                     {checkbox_list}
                     <GridColumn width={2}>
-                        <Checkbox
-                            toggle label={"升序"}
+                        <Checkbox onClick={this.props.handleReverseChange}
+                                  toggle label={"降序"}
                         />
                     </GridColumn>
                     <GridColumn width={2}>
@@ -91,10 +92,22 @@ class ShowLaptops extends React.Component {
         const laptop_list = this.props.laptop_list;
         const page_number = this.props.page_number;
         const item_per_page = this.props.item_per_page;
-
+        const chart_data = this.props.chart_data;
+        const cols = this.props.cols;
         const laptops = [];
         if (laptop_list.length < 1 || item_per_page === 0) {
             return <div/>
+        }
+        let chart = <div key={"chart"}/>;
+        console.log(chart_data);
+        if (chart_data !== undefined && cols !== undefined) {
+            chart = <Chart key={"chart"} width={600} height={400} data={chart_data} scale={cols}>
+                <Axis name={"interval"} title/>
+                <Axis name={"number"} title/>
+                <Legend position={"top"}/>
+                <Tooltip/>
+                <Geom type={"interval"} position={"interval*number"} color={"interval"}/>
+            </Chart>
         }
         const total_page = Math.ceil(laptop_list.length / item_per_page);
 
@@ -142,7 +155,9 @@ class ShowLaptops extends React.Component {
                         onPageChange={this.props.handlePageChange}
                     />
                 </Segment>
-
+                <Segment basic textAlign={"center"}>
+                    {chart}
+                </Segment>
             </div>
         );
 
@@ -152,7 +167,7 @@ class ShowLaptops extends React.Component {
 class App extends React.Component {
     constructor(props) {
         super(props);
-        const ip_address = "http://10.222.167.43:8080/";
+        const ip_address = "http://10.222.174.62:8080/";
         this.__props_link = `${ip_address}props`;
         this.__laptops_link = `${ip_address}laptops`;
         this.__recommendation = `${ip_address}recommendation`;
@@ -326,12 +341,15 @@ class App extends React.Component {
                     handleSortChange={this.handleSortChange.bind(this)}
                     // check_precondition_of_fetch_laptops={this.check_precondition_of_fetch_laptops.bind(this)}
                     handleQueryClick={this.handleQueryClick.bind(this)}
+                    handleReverseChange={this.handleReverseChange.bind(this)}
                 />
                 <ShowLaptops
                     page_number={this.state.page_number}
                     item_per_page={this.state.item_per_page}
                     laptop_list={this.state.laptop_list}
                     handlePageChange={this.handlePageChange.bind(this)}
+                    chart_data={this.state.chart_data}
+                    cols={this.state.cols}
                 />
             </div>
         )
@@ -408,25 +426,29 @@ class App extends React.Component {
             reverse: state.reverse,
         };
         const send = JSON.stringify(text);
-        console.log(send);
         fetch(this.__laptops_link, {
             method: "POST",
             headers: {"Content-Type": "application/json; charset=utf-8"},
             body: send,
         }).then(res => res.json()).then(data => {
+            const {laptops, chart_data, cols} = this.parse_data_got(data);
             this.setState({
-                laptop_list: this.parse_data_got(data)
+                laptop_list: laptops,
+                chart_data: chart_data,
+                cols: cols
             });
         });
     }
 
     /**
      *
-     * @returns {[]} parsed data
+     * @returns {{laptops: [], chart_data: [], cols: {}}} parsed data
      * @param raw_data
      */
     parse_data_got(raw_data) {
         const laptop_list = [];
+        const chart_data = [];
+        const interval_num = {};
         for (const data of raw_data) {
             laptop_list.push({
                 "product": data["product"],
@@ -442,9 +464,26 @@ class App extends React.Component {
                 "price": data["price"],
                 "sales": data["sales"]
             });
+            if (data["interval"] in interval_num) {
+                interval_num[data["interval"]] += 1;
+            } else {
+                interval_num[data["interval"]] = 1;
+            }
         }
-        console.log(laptop_list);
-        return laptop_list;
+        for (const interval of Object.getOwnPropertyNames(interval_num)) {
+            chart_data.push({
+                "interval": interval, "number": interval_num[interval]
+            });
+        }
+        const cols = {
+            interval: "价格区间",
+            number: "产品数量"
+        };
+        return {
+            "laptops": laptop_list,
+            chart_data: chart_data,
+            cols: cols,
+        };
     }
 
     check_precondition_of_fetch_recommendation() {
@@ -471,10 +510,18 @@ class App extends React.Component {
             headers: {"Content-Type": "application/json; charset=utf-8"},
             body: send,
         }).then(res => res.json()).then(data => {
-            // console.log(data);
+            const {laptops, chart_data, cols} = this.parse_data_got(data);
             this.setState({
-                laptop_list: this.parse_data_got(data)
+                laptop_list: laptops,
+                chart_data: chart_data,
+                cols: cols
             });
+        });
+    }
+
+    handleReverseChange(e) {
+        this.setState({
+            reverse: !this.state.reverse,
         });
     }
 
