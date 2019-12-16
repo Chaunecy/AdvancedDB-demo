@@ -476,8 +476,8 @@ class App extends React.Component {
             });
         }
         const cols = {
-            interval: "价格区间",
-            number: "产品数量"
+            interval: {alias: "价格区间"},
+            number: {alias: "产品数量"}
         };
         return {
             "laptops": laptop_list,
