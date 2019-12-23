@@ -12,6 +12,7 @@ import {
     TableRow, TabPane
 } from "semantic-ui-react";
 import {Axis, Chart, Geom, Legend, Tooltip} from "bizcharts";
+import {ip_address} from "./ip-config";
 
 class MultiChoice extends React.Component {
     render() {
@@ -99,7 +100,6 @@ class ShowLaptops extends React.Component {
             return <div/>
         }
         let chart = <div key={"chart"}/>;
-        console.log(chart_data);
         if (chart_data !== undefined && cols !== undefined) {
             chart = <Chart key={"chart"} width={600} height={400} data={chart_data} scale={cols}>
                 <Axis name={"interval"} title/>
@@ -167,7 +167,6 @@ class ShowLaptops extends React.Component {
 class App extends React.Component {
     constructor(props) {
         super(props);
-        const ip_address = "http://10.222.174.62:8080/";
         this.__props_link = `${ip_address}props`;
         this.__laptops_link = `${ip_address}laptops`;
         this.__recommendation = `${ip_address}recommendation`;
